@@ -1,16 +1,19 @@
 ##Import the necessary module
+import json
 
 
 ## This function should load the library data from a JSON file and return it as a suitable Python data structure.
 def load_library(filename):
-    pass
+    with open(filename, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 
 ## This function should save the library data to a JSON file.
 ## This function does not need to return anything, but it should ensure that the data is saved correctly to the specified file.
 def save_library(data, filename):
-    pass
+    with open(filename, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4)
     
 
 
@@ -19,7 +22,23 @@ def save_library(data, filename):
 ## If the book is found, it should return the book ID.
 ## If the book is not found, it should return None.
 def find_book(books, search_text):
-    pass
+    if search_text is None:
+        return None
+
+    normalized = str(search_text).strip().lower()
+
+    if not normalized:
+        return None
+
+    for book_id, book in books.items():
+        if (
+            str(book_id).strip().lower() == normalized
+            or str(book.get("title", "")).strip().lower() == normalized
+            or str(book.get("author", "")).strip().lower() == normalized
+        ):
+            return book_id
+
+    return None
 
 
 
@@ -29,7 +48,20 @@ def find_book(books, search_text):
 ## The function should not return anything, but it should print the information to the console.
 ## The heading for this display should be "BOOK CATALOGUE".
 def display_books(books):
-    pass
+    print("BOOK CATALOGUE")
+    print("-" * 60)
+
+    for book_id, book in books.items():
+        status = (
+            "AVAILABLE"
+            if book.get("available", False)
+            else "ON LOAN"
+        )
+
+        print(
+            f"{book_id} | {book.get('title', 'Unknown')} "
+            f"| {book.get('category', 'Unknown')} | {status}"
+        )
 
 
 ## This function should display the list of current loans in a user-friendly format.
@@ -37,7 +69,18 @@ def display_books(books):
 ## The heading for this display should be "CURRENT LOANS".
 ## The function should not return anything, but it should print the information to the console.
 def display_loans(loans, books):
-    pass
+    print("CURRENT LOANS")
+    print("-" * 60)
+
+    for loan in loans:
+        book_id = loan.get("book_id", "Unknown")
+
+        title = books.get(book_id, {}).get("title", "Unknown")
+
+        print(
+            f"{book_id} | {title} | "
+            f"Borrower: {loan.get('borrower', 'Unknown')}"
+        )
 
 
 ## This function should calculate and return the library statistics
@@ -45,7 +88,17 @@ def display_loans(loans, books):
 ## The function should return these three values in the order: total, available, borrowed. Use a suitable data structure to return these values, such as a tuple or a dictionary.
 
 def library_statistics(books):
-    pass
+    total = len(books)
+
+    available = sum(
+        1
+        for book in books.values()
+        if book.get("available", False)
+    )
+
+    borrowed = total - available
+
+    return (total, available, borrowed)
 
 
 ## This function should display the library statistics in a user-friendly format.
@@ -55,42 +108,36 @@ def library_statistics(books):
 ## It should print the total number of books, the number of available books, and the number of borrowed books.
 ## The function should not return anything, but it should print the information to the console.
 def main():
-    pass
+    data = load_library("library.json")
+
+    library = data["library"]
+    categories = data["categories"]
+    books = data["books"]
+    loans = data.get("loans", [])
+
+    print("LIBRARY ADMINISTRATION")
+    print("=" * 60)
+    print(f"Library: {library['name']}")
+    print(f"Branch: {library['branch']}")
+    print(f"Year: {library['year']}")
+    print(f"Categories: {', '.join(categories)}")
+    print()
+
+    display_books(books)
+    print()
+
+    display_loans(loans, books)
+    print()
+
+    print("LIBRARY STATISTICS")
+    print("-" * 60)
+
+    total, available, borrowed = library_statistics(books)
+
+    print(f"Total books: {total}")
+    print(f"Available: {available}")
+    print(f"Borrowed: {borrowed}")
 
 
-## Following is how the Admin interface should look like when the program is run. 
-# The actual output may vary based on the library data and the current state of loans.
-
-""" 
-LIBRARY ADMINISTRATION
-============================================================
-Library: 
-Branch: 
-Year: 
-Categories: 
-
-BOOK CATALOGUE
-------------------------------------------------------------
-ID1 | Title1 | Category | Availability
-ID2 | Title2 | Category | Availability
-...
-...
-...
-IDN | TitleN | Category | Availability
-
-
-CURRENT LOANS
-------------------------------------------------------------
-ID1 | Title1 | Borrower: Borrower1
-ID2 | Title2 | Borrower: Borrower2
-...
-...
-...
-IDN | TitleN | Borrower: BorrowerN
-
-STATISTICS
-------------------------------------------------------------
-Total books: XX
-Available: XX
-Borrowed: XX
-"""
+if __name__ == "__main__":
+    main()
